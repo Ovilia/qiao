@@ -37,6 +37,8 @@
         alignY: 0.9
       });
 
+      // needle
+      var needle = Stage.image('needle').appendTo(stage);
     });
 
   }
@@ -53,6 +55,18 @@
           y: 0,
           width: 500,
           height: 290
+        }
+      }
+    });
+
+    Stage({
+      image: 'img/needle.png',
+      textures: {
+        needle: {
+          x: 0,
+          y: 0,
+          width: 33,
+          height: 500
         }
       }
     });
