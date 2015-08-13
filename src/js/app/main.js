@@ -1,28 +1,61 @@
-Stage(function(stage, display) {
+(function() {
 
-  // Set viewbox for stage, see pinning for valid modes
-  stage.viewbox(window.innerWidth, window.innerHeight);
+  init();
 
-   // Create an image and append it to stage
-  var box = Stage.image('box').appendTo(stage);
 
-  // Align box to center
-  box.pin('align', 0.5);
 
-  // On mouse click...
-  box.on('click', function(point) {
-    // ...tween scale values of this node
-    this.tween().ease('bounce').pin({
-      scaleX : Math.random() + 0.5,
-      scaleY : Math.random() + 0.5
-    });
-  });
-});
+  function init() {
 
-// Adding a texture
-Stage({
-  image : 'img/soap.png',
-  textures : {
-    box : { x : 0, y : 0, width : 30, height : 30 }
+    loadResource();
+    initStage();
+
   }
-});
+
+
+
+  function initStage() {
+
+    Stage(function(stage, display) {
+
+      // stage
+      stage.viewbox(window.innerWidth, window.innerHeight);
+
+      // soap
+      var soap = Stage.image('soap').appendTo(stage);
+      soap.pin({
+        alignX: -0.5,
+        alignY: -0.5,
+        scaleMode: 'in',
+        scaleWidth: window.innerWidth * 0.9,
+        scaleHeight: window.innerHeight * 0.4,
+      });
+      // soap tween
+      var soapTween = soap.tween(500);
+      soapTween.ease('bounce');
+      soapTween.pin({
+        alignX: 0.5,
+        alignY: 0.9
+      });
+
+    });
+
+  }
+
+
+
+  function loadResource() {
+
+    Stage({
+      image: 'img/soap-500.png',
+      textures: {
+        soap: {
+          x: 0,
+          y: 0,
+          width: 500,
+          height: 290
+        }
+      }
+    });
+
+  }
+})();
