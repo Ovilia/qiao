@@ -1,0 +1,13 @@
+$zoom-width: 300px;
+
+#zoom {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: $zoom-width;
+  height: $zoom-width;
+  border-radius: $zoom-width / 2;
+  margin-left: -$zoom-width / 2;
+  margin-top: -$zoom-width / 3;
+  background-color: $clr-zoom-back;
+}
