@@ -4,6 +4,13 @@
     soap: {
       width: 500,
       height: 290
+    },
+    zoom: {
+      size: 300,
+      img: null
+    },
+    mouse: {
+      isDown: false
     }
   };
 
@@ -27,27 +34,62 @@
 
     Stage(function(stage, display) {
 
-      // stage
-      stage.viewbox(window.innerWidth, window.innerHeight).on(
-        // event handling
-        Stage.Mouse.START, function(point) {
-          // copy to zoom canvas
-          var mainCtx = getCtx(0);
-          // read pixels near touch position
-          var width = 300;
-          var height = width;
-          var left = point.x - width / 2;
-          var top = point.y - height / 2;
-          // TODO: why all zero here?!!
-          var pixels = mainCtx.getImageData(left, top, width, height);
+      // init zoom canvas size
+      var canvases = document.getElementsByTagName('canvas');
+      var zoomCanvas = canvases[1];
+      zoomCanvas.width = gb.zoom.size * window.devicePixelRatio;
+      zoomCanvas.height = zoomCanvas.width;
+      var zoomCtx = zoomCanvas.getContext('2d');
 
-          // write to zoom canvas
-          var zoomCtx = getCtx(1);
-          var zoomRatio = 2;
-          zoomCtx.putImageData(pixels, 0, 0);
-          // zoomCtx.setTransform(zoomRatio, 0, 0, zoomRatio, 0, 0);
+      // canvas for main game scene
+      var mainCanvas = canvases[0];
+      var mainCtx = mainCanvas.getContext('2d');
+
+      // event handling
+      stage.viewbox(window.innerWidth, window.innerHeight).on(
+        Stage.Mouse.START, function(point) {
+          gb.mouse.isDown = true;
+          zoomCanvas.style.display = 'block';
+          // copy to zoom canvas
+          updateZoom(point.x, point.y);
+        }
+      ).on(
+        Stage.Mouse.MOVE, function(point) {
+          if (gb.mouse.isDown) {
+            // copy to zoom canvas
+            updateZoom(point.x, point.y);
+          }
+        }
+      ).on(
+        Stage.Mouse.END, function(point) {
+          gb.mouse.isDown = false;
+          zoomCanvas.style.display = 'none';
         }
       );
+
+      // copy pixels to zoom canvas
+      function updateZoom(x, y) {
+        var width = zoomCanvas.width;
+        var height = zoomCanvas.height;
+        var left = x * 0.8;
+        var top = y * 0.8;
+
+        var url = document.getElementsByTagName('canvas')[0].toDataURL();
+        var load = function() {
+          // write to zoom canvas
+          zoomCtx.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
+          zoomCtx.drawImage(gb.zoom.img, left, top, width, height,
+              0, 0, width, height);
+        };
+        if (gb.zoom.img === null) {
+          // load image
+          gb.zoom.img = new Image();
+          gb.zoom.img.onload = load;
+          gb.zoom.img.src = url;
+        } else {
+          load();
+        }
+      }
 
       // soap
       var soap = Stage.image('soap').appendTo(stage);
@@ -118,13 +160,6 @@
       }
     });
 
-  }
-
-
-
-  function getCtx(id) {
-    var canvas = document.getElementsByTagName('canvas')[id];
-    return canvas.getContext('2d');
   }
 
 })();
