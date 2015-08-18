@@ -74,7 +74,6 @@
         var left = x * 0.8;
         var top = y * 0.8;
 
-        var url = document.getElementsByTagName('canvas')[0].toDataURL();
         var load = function() {
           // write to zoom canvas
           zoomCtx.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
@@ -82,6 +81,7 @@
               0, 0, width, height);
         };
         if (gb.zoom.img === null) {
+          var url = document.getElementsByTagName('canvas')[0].toDataURL();
           // load image
           gb.zoom.img = new Image();
           gb.zoom.img.onload = load;
