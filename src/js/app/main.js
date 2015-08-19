@@ -20,7 +20,9 @@
     particle: {
       proton: null,
       emitters: [],
-      renderer: null
+      renderer: null,
+      colorId: 0,
+      colorBehaviours: []
     },
     canvas: {
       zoom: null,
@@ -99,7 +101,7 @@
       // needle
       for (var i = 0; i < gb.needles.cnt; ++i) {
         var rotation = Math.PI / 10 * Math.random() - Math.PI / 20;
-        var ty = 0.65  + Math.random() * 0.1;
+        var ty = 0.6  + Math.random() * 0.1;
         var tx = 0.2 + i / 10;
         var dy = 2;
         var dx = dy * Math.tan(rotation);
@@ -201,12 +203,17 @@
 
   function tick() {
 
-    gb.particle.proton.update();
+    // update color of emitters
+    ++gb.particle.colorId;
+    for (var i = 0, len = gb.particle.emitters.length; i < len; ++i) {
+      var color1 = Color.parse("hsl(" + (gb.particle.colorId + Math.floor(
+          360 / gb.needles.cnt * i)) % 360 + ", 100%, 50%)").hexTriplet();
+      var color2 = Color.parse("hsl(" + (gb.particle.colorId + Math.floor(
+          360 / gb.needles.cnt * (i + 1))) % 360 + ", 100%, 50%)").hexTriplet();
+      gb.particle.colorBehaviours[i].reset(color1, color2);
+    }
 
-    // if (gb.needles.holes.length > 0) {
-    //   gb.particle.emitters[0].p.x = gb.needles.holes[0].x;
-    //   gb.particle.emitters[0].p.y = gb.needles.holes[0].y;
-    // }
+    gb.particle.proton.update();
 
     requestAnimationFrame(tick);
 
@@ -218,14 +225,23 @@
     gb.particle.emitters.push(emitter);
 
     // emit 10 to 20 particles per 0.1 second
-    emitter.rate = new Proton.Rate(Proton.getSpan(10, 20), 0.01);
+    emitter.rate = new Proton.Rate(Proton.getSpan(10, 20), 0.1);
 
-    emitter.addInitialize(new Proton.Radius(1, 5));
-    emitter.addInitialize(new Proton.Life(0.1, 0.2));
+    emitter.addInitialize(new Proton.Radius(1, 12));
+    emitter.addInitialize(new Proton.Life(0.1, 0.5));
     emitter.addInitialize(new Proton.Velocity(3, Proton.getSpan(90, 90), 'polar'));
+    emitter.addInitialize(new Proton.Radius(5));
 
-    emitter.addBehaviour(new Proton.Color('ff0000', 'random'));
+    var color1 = Color.parse("hsl(" + 360 / gb.needles.cnt * gb.needles.curId
+        + ", 100%, 50%)").hexTriplet();
+    var color2 = Color.parse("hsl(" + 360 / gb.needles.cnt * (gb.needles.curId + 1)
+        + ", 100%, 50%)").hexTriplet();
+    var colorBehaviour = new Proton.Color(color1, color2);
+    gb.particle.colorBehaviours.push(colorBehaviour);
+    emitter.addBehaviour(colorBehaviour);
+
     emitter.addBehaviour(new Proton.Alpha(1, 0));
+    emitter.addBehaviour(new Proton.Scale(1, 0.5));
 
     // first emitter, moving and rotating with touch, set in eventHandler
     // others will emit to last needle
@@ -238,11 +254,11 @@
       // set length of thread
       var distance = getDistance(last, cur);
       gb.particle.emitters[0].addInitialize(new Proton.Life(
-          0.005 * distance, 0.01 * distance));
+          0.008 * distance, 0.02 * distance));
       // set rotation of thread
       var angle = 90 - getAngle(last, cur);
       emitter.addInitialize(new Proton.Velocity(3,
-          Proton.getSpan(angle, angle), 'polar'));
+          Proton.getSpan(angle - 20, angle + 20), 'polar'));
 
       emitter.emit();
     }
@@ -310,9 +326,7 @@
     // copy to zoom canvas
     updateZoom(e.touches[0].clientX, e.touches[0].clientY);
 
-    for (var i = 0, len = gb.particle.emitters.length; i < len; ++i) {
-      gb.particle.emitters[i].emit();
-    }
+    gb.particle.emitters[0].emit();
 
   });
 
@@ -323,9 +337,7 @@
     gb.canvas.zoom.style.display = 'none';
     document.getElementById('touch-position').style.display = 'none';
 
-    for (var i = 0, len = gb.particle.emitters.length; i < len; ++i) {
-      gb.particle.emitters[i].stopEmit();
-    }
+    gb.particle.emitters[0].stopEmit();
 
   });
 
@@ -366,7 +378,7 @@
       // set rotation of thread
       var angle = 90 - getAngle(last, cur);
       emitter.addInitialize(new Proton.Velocity(3,
-          Proton.getSpan(angle, angle), 'polar'));
+          Proton.getSpan(angle - 2, angle + 2), 'polar'));
 
     }
 
