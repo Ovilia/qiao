@@ -11,6 +11,19 @@
     },
     mouse: {
       isDown: false
+    },
+    needles: {
+      holes: []
+    },
+    particle: {
+      proton: null,
+      emitters: [],
+      renderer: null
+    },
+    canvas: {
+      zoom: null,
+      main: null,
+      particle: null
     }
   };
 
@@ -24,6 +37,8 @@
 
     initStage();
 
+    initParticle();
+
   }
 
 
@@ -35,62 +50,31 @@
     Stage(function(stage, display) {
 
       // init zoom canvas size
-      var canvases = document.getElementsByTagName('canvas');
-      var zoomCanvas = canvases[1];
+      gb.canvas.zoom = document.getElementsByTagName('canvas')[1];
+      var zoomCanvas = gb.canvas.zoom;
       zoomCanvas.width = gb.zoom.size * window.devicePixelRatio;
       zoomCanvas.height = zoomCanvas.width;
       var zoomCtx = zoomCanvas.getContext('2d');
 
       // canvas for main game scene
-      var mainCanvas = canvases[0];
-      var mainCtx = mainCanvas.getContext('2d');
+      gb.canvas.main = document.getElementsByTagName('canvas')[0];
+      var mainCtx = gb.canvas.main.getContext('2d');
 
       // event handling
-      stage.viewbox(window.innerWidth, window.innerHeight).on(
-        Stage.Mouse.START, function(point) {
-          gb.mouse.isDown = true;
-          zoomCanvas.style.display = 'block';
-          // copy to zoom canvas
-          updateZoom(point.x, point.y);
-        }
-      ).on(
-        Stage.Mouse.MOVE, function(point) {
-          if (gb.mouse.isDown) {
-            // copy to zoom canvas
-            updateZoom(point.x, point.y);
-          }
-        }
-      ).on(
-        Stage.Mouse.END, function(point) {
-          gb.mouse.isDown = false;
-          zoomCanvas.style.display = 'none';
-        }
-      );
-
-      // copy pixels to zoom canvas
-      function updateZoom(x, y) {
-
-        var width = zoomCanvas.width;
-        var height = zoomCanvas.height;
-        var left = x - gb.zoom.size / 2;
-        var top = y - gb.zoom.size / 2;
-
-        if (gb.zoom.img) {
-          // write to zoom canvas
-          zoomCtx.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
-          zoomCtx.drawImage(gb.zoom.img, left, top, width, height,
-              0, 0, width, height);
-        }
-
-      }
+      stage.viewbox(window.innerWidth, window.innerHeight);
 
       // save main canvas to image for zoom canvas to use later
       function captureCanvas() {
 
-        var url = document.getElementsByTagName('canvas')[0].toDataURL();
-        // load image
-        gb.zoom.img = new Image();
-        gb.zoom.img.src = url;
+        // use setTimeout to make sure tween has ended
+        setTimeout(function() {
+
+          var url = document.getElementsByTagName('canvas')[0].toDataURL();
+          // load image
+          gb.zoom.img = new Image();
+          gb.zoom.img.src = url;
+
+        }, 500);
 
       }
 
@@ -118,6 +102,12 @@
         var dy = 2;
         var dx = dy * Math.tan(rotation);
 
+        var h = 120;
+        gb.needles.holes.push({
+          x: tx * window.innerWidth + h * Math.tan(rotation),
+          y: ty * window.innerHeight - h
+        });
+
         var needle = Stage.image('needle').appendTo(stage).pin({
           alignX: tx + dx,
           alignY: ty - dy,
@@ -131,7 +121,31 @@
           alignY: ty
         }).done(captureCanvas);
       }
+
+      // add emitter
+      addEmitter();
+
     });
+
+  }
+
+  // copy pixels to zoom canvas
+  function updateZoom(x, y) {
+
+    var zoom = gb.canvas.zoom;
+    var zoomCtx = zoom.getContext('2d');
+
+    var width = zoom.width;
+    var height = zoom.height;
+    var left = (x - zoom.width / 4) * 2;
+    var top = (y - zoom.height / 4) * 2;
+
+    if (gb.zoom.img) {
+      // write to zoom canvas
+      zoomCtx.clearRect(0, 0, gb.canvas.main.width, gb.canvas.main.height);
+      zoomCtx.drawImage(gb.zoom.img, left, top, width, height,
+          0, 0, width, height);
+    }
 
   }
 
@@ -162,6 +176,115 @@
         }
       }
     });
+
+  }
+
+
+
+  function initParticle() {
+
+    gb.canvas.particle = document.getElementById('particle');
+    var canvas = gb.canvas.particle;
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    gb.particle.proton = new Proton();
+
+    gb.particle.renderer = new Proton.Renderer('canvas', gb.particle.proton, canvas);
+    gb.particle.renderer.start();
+
+    tick();
+
+  }
+
+  function tick() {
+
+    gb.particle.proton.update();
+
+    // if (gb.needles.holes.length > 0) {
+    //   gb.particle.emitters[0].p.x = gb.needles.holes[0].x;
+    //   gb.particle.emitters[0].p.y = gb.needles.holes[0].y;
+    // }
+
+    requestAnimationFrame(tick);
+
+  }
+
+  function addEmitter(distance) {
+
+    var emitter = new Proton.Emitter();
+    gb.particle.emitters.push(emitter);
+
+    // emit 10 to 20 particles per 0.1 second
+    emitter.rate = new Proton.Rate(Proton.getSpan(10, 20), 0.01);
+
+    emitter.addInitialize(new Proton.Radius(1, 5));
+    emitter.addInitialize(new Proton.Life(0.1, 0.2));
+    emitter.addInitialize(new Proton.Velocity(3, Proton.getSpan(90, 90), 'polar'));
+
+    emitter.addBehaviour(new Proton.Color('ff0000', 'random'));
+    emitter.addBehaviour(new Proton.Alpha(1, 0));
+
+    emitter.p.x = 0;
+    emitter.p.y = 0;
+    emitter.emit();
+
+    gb.particle.proton.addEmitter(emitter);
+
+  }
+
+
+
+  // event handling
+  document.addEventListener('touchstart', function(e) {
+
+    gb.mouse.isDown = true;
+
+    gb.canvas.zoom.style.display = 'block';
+    document.getElementById('touch-position').style.display = 'block';
+
+    // copy to zoom canvas
+    updateZoom(e.touches[0].clientX, e.touches[0].clientY);
+
+  });
+
+  document.addEventListener('touchend', function() {
+
+    gb.mouse.isDown = false;
+
+    gb.canvas.zoom.style.display = 'none';
+    document.getElementById('touch-position').style.display = 'none';
+
+  });
+
+  document.addEventListener('touchmove', function(e) {
+
+    if (gb.mouse.isDown) {
+      var x = e.touches[0].clientX;
+      var y = e.touches[0].clientY;
+
+      // copy to zoom canvas
+      updateZoom(x, y);
+
+      gb.particle.emitters[0].p.x = x;
+      gb.particle.emitters[0].p.y = y;
+
+      getZoomPosition(x, y);
+    }
+
+    e.preventDefault();
+
+  });
+
+
+
+  // main canvas position to zoom position in main canvas
+  function getZoomPosition(x, y) {
+
+    var width = zoom.width;
+    var height = zoom.height;
+    var left = x - gb.zoom.size / 2;
+    var top = y - gb.zoom.size / 2;
 
   }
 

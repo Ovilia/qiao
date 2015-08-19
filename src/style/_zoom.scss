@@ -12,3 +12,21 @@ $zoom-width: 300px;
   margin-top: -$zoom-width / 3;
   background-color: $clr-zoom-back;
 }
+
+$touch-width: 28px;
+
+#touch-position {
+  box-sizing: border-box;
+  width: $touch-width;
+  height: $touch-width;
+  background-color: #333;
+  opacity: 0.4;
+  border-radius: $touch-width / 2;
+  border: 2px solid #ccc;
+  position: absolute;
+  top: $zoom-width / 6 - $touch-width / 2;
+  left: 50%;
+  margin-left: -$touch-width / 2;
+  z-index: 20;
+  display: none;
+}
