@@ -13,7 +13,9 @@
       isDown: false
     },
     needles: {
-      holes: []
+      holes: [],
+      curId: -1,
+      cnt: 7
     },
     particle: {
       proton: null,
@@ -95,7 +97,7 @@
       });
 
       // needle
-      for (var i = 0; i < 7; ++i) {
+      for (var i = 0; i < gb.needles.cnt; ++i) {
         var rotation = Math.PI / 10 * Math.random() - Math.PI / 20;
         var ty = 0.65  + Math.random() * 0.1;
         var tx = 0.2 + i / 10;
@@ -210,7 +212,7 @@
 
   }
 
-  function addEmitter(distance) {
+  function addEmitter() {
 
     var emitter = new Proton.Emitter();
     gb.particle.emitters.push(emitter);
@@ -225,12 +227,74 @@
     emitter.addBehaviour(new Proton.Color('ff0000', 'random'));
     emitter.addBehaviour(new Proton.Alpha(1, 0));
 
-    emitter.p.x = 0;
-    emitter.p.y = 0;
-    emitter.emit();
+    // first emitter, moving and rotating with touch, set in eventHandler
+    // others will emit to last needle
+    if (gb.needles.curId >= 0) {
+      var last = getLastNeedlePosition();
+      var cur = gb.needles.holes[gb.needles.curId];
+      // set position of thread
+      emitter.p.x = cur.x;
+      emitter.p.y = cur.y;
+      // set length of thread
+      var distance = getDistance(last, cur);
+      gb.particle.emitters[0].addInitialize(new Proton.Life(
+          0.005 * distance, 0.01 * distance));
+      // set rotation of thread
+      var angle = 90 - getAngle(last, cur);
+      emitter.addInitialize(new Proton.Velocity(3,
+          Proton.getSpan(angle, angle), 'polar'));
+
+      emitter.emit();
+    }
 
     gb.particle.proton.addEmitter(emitter);
 
+  }
+
+  function getLastNeedlePosition() {
+    if (gb.needles.curId > 0) {
+      return gb.needles.holes[gb.needles.curId - 1];
+    } else {
+      // first needle, use left side
+      return {
+        x: 0,
+        y: window.innerHeight * 3 / 4
+      };
+    }
+  }
+
+  function getCurNeedlePosition() {
+    if (gb.needles.curId >= 0) {
+      return gb.needles.holes[gb.needles.curId];
+    } else {
+      // first needle, use left side
+      return {
+        x: 0,
+        y: window.innerHeight * 3 / 4
+      };
+    }
+  }
+
+  function getDistance(last, cur) {
+    return Math.sqrt((last.x - cur.x) * (last.x - cur.x)
+        + (last.y - cur.y) * (last.y - cur.y));
+  }
+
+  function getAngle(last, cur) {
+    if (last.x === cur.x) {
+      return (cur.y - last.y >= 0) ? 0 : 180;
+    }
+    var radian = Math.atan(-(cur.y - last.y) / (cur.x - last.x));
+    if (cur.x - last.x < 0) {
+      radian += Math.PI;
+    }
+    return radian / Math.PI * 180 + 180;
+  }
+
+
+
+  function win() {
+    console.log('win');
   }
 
 
@@ -246,6 +310,10 @@
     // copy to zoom canvas
     updateZoom(e.touches[0].clientX, e.touches[0].clientY);
 
+    for (var i = 0, len = gb.particle.emitters.length; i < len; ++i) {
+      gb.particle.emitters[i].emit();
+    }
+
   });
 
   document.addEventListener('touchend', function() {
@@ -255,6 +323,10 @@
     gb.canvas.zoom.style.display = 'none';
     document.getElementById('touch-position').style.display = 'none';
 
+    for (var i = 0, len = gb.particle.emitters.length; i < len; ++i) {
+      gb.particle.emitters[i].stopEmit();
+    }
+
   });
 
   document.addEventListener('touchmove', function(e) {
@@ -263,29 +335,43 @@
       var x = e.touches[0].clientX;
       var y = e.touches[0].clientY;
 
+      // check if enters hole of the next needle
+      var tolerance = 10;
+      var hole = gb.needles.holes[gb.needles.curId + 1];
+      if (hole && Math.abs(hole.x - x) < tolerance
+          && Math.abs(hole.y - y) < tolerance) {
+        // bingo
+        ++gb.needles.curId;
+        addEmitter();
+
+        if (gb.needles.curId === gb.needles.cnt - 1) {
+          // last needle! win!!!
+          win();
+        }
+      }
+
       // copy to zoom canvas
       updateZoom(x, y);
 
-      gb.particle.emitters[0].p.x = x;
-      gb.particle.emitters[0].p.y = y;
+      // update the first emitter with touch position
+      var emitter = gb.particle.emitters[0];
+      emitter.p.x = x;
+      emitter.p.y = y;
+      var last = getCurNeedlePosition();
+      var cur = {x: x, y: y};
+      // set length of thread
+      var distance = getDistance(last, cur);
+      gb.particle.emitters[0].addInitialize(new Proton.Life(
+          0.005 * distance, 0.01 * distance));
+      // set rotation of thread
+      var angle = 90 - getAngle(last, cur);
+      emitter.addInitialize(new Proton.Velocity(3,
+          Proton.getSpan(angle, angle), 'polar'));
 
-      getZoomPosition(x, y);
     }
 
     e.preventDefault();
 
   });
-
-
-
-  // main canvas position to zoom position in main canvas
-  function getZoomPosition(x, y) {
-
-    var width = zoom.width;
-    var height = zoom.height;
-    var left = x - gb.zoom.size / 2;
-    var top = y - gb.zoom.size / 2;
-
-  }
 
 })();
