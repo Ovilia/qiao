@@ -4,6 +4,8 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, width=device-width, height=device-height" />
 
+        <title>巧 - 羡辙做了一个她自己也不想玩的游戏</title>
+
         <link rel="stylesheet" type="text/css" href="src/style/main.css" />
     </head>
 
@@ -12,6 +14,18 @@
         <canvas id="particle"></canvas>
         
         <div id="touch-position"></div>
+
+        <div id="text" class="onscreen">
+            <h2>恭喜你赢啦！</h2>
+            <h3>然而你也知道，这并没有什么 x 用</h3>
+            <div><span id="time">0</span> 秒</div>
+            <div><button onclick="restart()">重新开始</button></div>
+        </div>
+
+        <div id="description" class="onscreen">
+            <p>这是一个没有解释，没有目的，也没有意义的游戏——甚至它还可能跑不起来。</p>
+            <p>所以它也没有玩家，没有奖品，当然也就没有赢家——谁让它是单身狗写的呢。</p>
+        </div>
 
         <script type="text/javascript" src="src/js/lib/stage.web.js"></script>
         <script type="text/javascript" src="src/js/lib/proton.min.js"></script>

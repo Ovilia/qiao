@@ -1,13 +1,60 @@
 body {
   background-color: $clr-dark;
+  font-size: 1.1rem;
 }
 
 * {
   margin: 0;
   padding: 0;
+  box-sizing: border-box;
 }
 
 html, body {
   width: 100%;
   height: 100%;
+}
+
+.onscreen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  text-align: center;
+  color: $clr-light;
+  width: 100%;
+  z-index: 30;
+  padding: 0.5rem;
+
+  &#text {
+    display: none;
+  }
+
+  h2 {
+    color: $clr-lighter;
+    font-size: 1.5rem;
+    margin-top: 1rem;
+  }
+
+  h3 {
+    font-size: 1.1rem;
+    margin: 0.5rem 0;
+  }
+
+  p {
+    color: $clr-lighter;
+    padding: 0.5rem 0;
+    line-height: 1.5rem;
+    text-align: left;
+  }
+
+  #time {
+    color: $clr-primary;
+    font-size: 5rem;
+  }
+
+  button {
+    padding: 0.2rem 0.4rem;
+    background-color: $clr-primary;
+    color: $clr-dark;
+    border: none;
+  }
 }

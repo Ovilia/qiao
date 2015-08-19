@@ -28,6 +28,10 @@
       zoom: null,
       main: null,
       particle: null
+    },
+    time: {
+      start: null,
+      end: null
     }
   };
 
@@ -310,8 +314,19 @@
 
 
   function win() {
-    console.log('win');
+    gb.time.end = new Date();
+    var elapsed = gb.time.end - gb.time.start;
+    document.getElementById('time').innerHTML = elapsed / 1000;
+    document.getElementById('text').style.display = 'block';
+    gb.canvas.zoom.style.display = 'none';
+    document.getElementById('touch-position').style.display = 'none';
   }
+
+  function restart() {
+    // yeah, I don't care!
+    window.location.reload(true);
+  }
+  window.restart = restart;
 
 
 
@@ -320,11 +335,19 @@
 
     gb.mouse.isDown = true;
 
-    gb.canvas.zoom.style.display = 'block';
-    document.getElementById('touch-position').style.display = 'block';
+    // start game
+    if (gb.time.start === null) {
+      gb.time.start = new Date();
+      document.getElementById('description').style.display = 'none';
+    }
 
-    // copy to zoom canvas
-    updateZoom(e.touches[0].clientX, e.touches[0].clientY);
+    if (gb.time.end !== null) {
+      gb.canvas.zoom.style.display = 'block';
+      document.getElementById('touch-position').style.display = 'block';
+
+      // copy to zoom canvas
+      updateZoom(e.touches[0].clientX, e.touches[0].clientY);
+    }
 
     gb.particle.emitters[0].emit();
 
