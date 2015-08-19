@@ -69,26 +69,29 @@
 
       // copy pixels to zoom canvas
       function updateZoom(x, y) {
+
         var width = zoomCanvas.width;
         var height = zoomCanvas.height;
-        var left = x * 0.8;
-        var top = y * 0.8;
+        var left = x - gb.zoom.size / 2;
+        var top = y - gb.zoom.size / 2;
 
-        var load = function() {
+        if (gb.zoom.img) {
           // write to zoom canvas
           zoomCtx.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
           zoomCtx.drawImage(gb.zoom.img, left, top, width, height,
               0, 0, width, height);
-        };
-        if (gb.zoom.img === null) {
-          var url = document.getElementsByTagName('canvas')[0].toDataURL();
-          // load image
-          gb.zoom.img = new Image();
-          gb.zoom.img.onload = load;
-          gb.zoom.img.src = url;
-        } else {
-          load();
         }
+
+      }
+
+      // save main canvas to image for zoom canvas to use later
+      function captureCanvas() {
+
+        var url = document.getElementsByTagName('canvas')[0].toDataURL();
+        // load image
+        gb.zoom.img = new Image();
+        gb.zoom.img.src = url;
+
       }
 
       // soap
@@ -126,7 +129,7 @@
         needle.tween().delay(soapSpeed + needleSpeed * i).ease('in').pin({
           alignX: tx,
           alignY: ty
-        });
+        }).done(captureCanvas);
       }
     });
 
